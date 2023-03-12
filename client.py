@@ -1,6 +1,7 @@
 '''Client socket API'''
 
 import socket as s
+import sys
 
 HOST = '127.0.0.1'
 PORT = 65432
@@ -12,7 +13,8 @@ while True:
     user_command = input('Enter the command! (Type help for command list):  ').encode('utf8')
     client_socket.sendall(user_command)
     data = client_socket.recv(1024).decode('utf8')
-    if data == 'false':
+    if data == 'server closed':
+        print(data)
         break
     else:
         print(data)

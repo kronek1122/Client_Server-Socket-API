@@ -41,6 +41,9 @@ with connection:
     while True:
         data = connection.recv(1024).decode('utf8')
 
+        if not data:
+            break
+
         if data == 'uptime':
             connection.send(uptime().encode('utf8'))
         if data == 'info':
