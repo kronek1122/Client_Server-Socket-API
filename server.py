@@ -29,7 +29,7 @@ def uptime():
 
     return json.dumps(str(datetime.now() - START_TIME))
 
-def sign_up_new_user(data_list):
+def register_user(data_list):
     '''Adding a new user'''
     user_information = {
         data_list[1]:data_list[2]
@@ -79,7 +79,7 @@ with connection:
         elif data_list[0] == 'help':
             connection.send(available_commands().encode('utf8'))
         elif data_list[0] == 'register':
-            connection.send(sign_up_new_user(data_list).encode('utf8'))
+            connection.send(register_user(data_list).encode('utf8'))
         elif data_list[0] == 'stop':
             connection.send(('server closed').encode('utf8'))
             server_socket.close()
