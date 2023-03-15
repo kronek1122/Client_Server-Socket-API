@@ -13,6 +13,7 @@ data_list = []
 logged_user = []
 msg = ''
 
+
 def available_commands():
     '''Return json file with list of available commands'''
 
@@ -22,7 +23,8 @@ def available_commands():
         'help': "returns a list of available commands",
         'stop': "stops server and client",
         'register <user name> <password>' : 'create new user',
-        'login <user name> <password>' : 'log in user'
+        'login <user name> <password>' : 'log in user',
+        'users' : 'return all user list'
     }
     return json.dumps(msg, indent=1)
 
@@ -31,6 +33,7 @@ def uptime():
     '''Return json file with lifetime of the server'''
 
     return json.dumps(str(datetime.now() - START_TIME))
+
 
 def register_user(data_list):
     '''Adding a new user'''
@@ -46,9 +49,9 @@ def register_user(data_list):
 
     return json.dumps(msg, indent=1)
 
+
 def login_user(data_list):
     '''Login user function'''
-
     global logged_user
     with open('user.json', 'r', encoding='utf8') as file:
         user_data = json.load(file)
@@ -66,6 +69,19 @@ def login_user(data_list):
         msg = "User doesn't exist"
     
     return json.dumps(msg, indent=1)
+
+
+def users_list(data_list):
+    '''return list of existing users'''
+
+    list_of_user = []
+    with open('user.json', 'r', encoding='utf8') as file:
+        user_data = json.load(file)
+
+    for user in user_data:
+        list_of_user.append(user)
+
+    return json.dumps(list_of_user, indent=1)
 
 
 def json_unpaking(data):
@@ -106,6 +122,9 @@ with connection:
 
         elif data_list[0] == 'login':
             connection.send(login_user(data_list).encode('utf8'))
+
+        elif data_list[0] == 'users':
+            connection.send(users_list(data_list).encode('utf8'))
 
         elif data_list[0] == 'stop':
             connection.send(('server closed').encode('utf8'))
