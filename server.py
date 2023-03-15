@@ -10,6 +10,8 @@ INFO = 'version: 0.2.0; creation date: 12.03.2023r'
 START_TIME = datetime.now()
 
 data_list = []
+logged_user = []
+msg = ''
 
 def available_commands():
     '''Return json file with list of available commands'''
@@ -19,7 +21,8 @@ def available_commands():
         'info': "returns the version of the server, the date of its creation",
         'help': "returns a list of available commands",
         'stop': "stops server and client",
-        'register <user name> <password>' : 'create new user'
+        'register <user name> <password>' : 'create new user',
+        'login <user name> <password>' : 'log in user'
     }
     return json.dumps(msg, indent=1)
 
@@ -31,21 +34,37 @@ def uptime():
 
 def register_user(data_list):
     '''Adding a new user'''
-    user_information = {
-        data_list[1]:data_list[2]
-    }
+    user_information = {data_list[1]:data_list[2]}
 
     with open('user.json', 'r', encoding='utf8') as file:
         user_data = json.load(file)
-
-    user_data[data_list[1]] = {
-        data_list[1]:data_list[2]
-    }
+    user_data[data_list[1]] = {data_list[1]:data_list[2]}
 
     with open('user.json', 'w', encoding='utf8') as file:
         json.dump(user_data, file)
-
     msg = f'User {data_list[1]} succesfully registered'
+
+    return json.dumps(msg, indent=1)
+
+def login_user(data_list):
+    '''Login user function'''
+
+    global logged_user
+    with open('user.json', 'r', encoding='utf8') as file:
+        user_data = json.load(file)
+    
+    user = data_list[1]
+    password = data_list[2]
+
+    if user in user_data:
+        if user_data[user][user] == password:
+            msg = f'User {user} succesfully log in'
+            logged_user = user
+        else:
+            msg = f'Wrong password for {user} account'
+    else:
+        msg = "User doesn't exist"
+    
     return json.dumps(msg, indent=1)
 
 
@@ -72,18 +91,27 @@ with connection:
             break
         
         json_unpaking(data)
+
         if data_list[0] == 'uptime':
             connection.send(uptime().encode('utf8'))
+
         elif data_list[0] == 'info':
             connection.send(INFO.encode('utf8'))
+
         elif data_list[0] == 'help':
             connection.send(available_commands().encode('utf8'))
+
         elif data_list[0] == 'register':
             connection.send(register_user(data_list).encode('utf8'))
+
+        elif data_list[0] == 'login':
+            connection.send(login_user(data_list).encode('utf8'))
+
         elif data_list[0] == 'stop':
             connection.send(('server closed').encode('utf8'))
             server_socket.close()
             break
+
         else:
             connection.send(('nieznana komenda').encode('utf8'))
 
