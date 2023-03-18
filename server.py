@@ -25,7 +25,8 @@ def available_commands():
         'register <user name> <password>' : 'create new user',
         'login <user name> <password>' : 'log in user',
         'users' : 'return all user list',
-        'send <user name> <massage>': 'send a massage to the selected user'
+        'send <user name> <massage>': 'send a massage to the selected user',
+        'inbox' : 'check message in your inbox'
     }
     return json.dumps(msg, indent=1)
 
@@ -40,11 +41,11 @@ def register_user(data_list):
     '''Adding a new user'''
     user_information = {data_list[1]:data_list[2]}
 
-    with open('user.json', 'r', encoding='utf8') as file:
+    with open('user.json', 'r', encoding='utf-8') as file:
         user_data = json.load(file)
     user_data[data_list[1]] = {data_list[1]:data_list[2]}
 
-    with open('user.json', 'w', encoding='utf8') as file:
+    with open('user.json', 'w', encoding='utf-8') as file:
         json.dump(user_data, file)
     msg = f'User {data_list[1]} succesfully registered'
 
@@ -54,7 +55,7 @@ def register_user(data_list):
 def login_user(data_list):
     '''Login user function'''
     global logged_user
-    with open('user.json', 'r', encoding='utf8') as file:
+    with open('user.json', 'r', encoding='utf-8') as file:
         user_data = json.load(file)
     
     user = data_list[1]
@@ -76,7 +77,7 @@ def users_list(data_list):
     '''return list of existing users'''
 
     list_of_user = []
-    with open('user.json', 'r', encoding='utf8') as file:
+    with open('user.json', 'r', encoding='utf-8') as file:
         user_data = json.load(file)
 
     for user in user_data:
@@ -89,7 +90,7 @@ def send_message(data_list):
     '''sending message to other players'''
 
     global logged_user
-    with open('user.json', 'r', encoding='utf8') as file:
+    with open('user.json', 'r', encoding='utf-8') as file:
         user_data = json.load(file)
     
     user = data_list[1]
@@ -99,14 +100,14 @@ def send_message(data_list):
         if logged_user in user_data:
             if logged_user != user:
                 try:
-                    with open(user + '.json', 'r', encoding='utf8') as file:
+                    with open(user + '.json', 'r', encoding='utf-8') as file:
                         mailbox_content = json.load(file)
                 except (FileNotFoundError, json.decoder.JSONDecodeError):
                     mailbox_content = {}
 
                 mailbox_content.update(user_message)
 
-                with open(user + '.json', 'w', encoding='utf8') as file:
+                with open(user + '.json', 'w', encoding='utf-8') as file:
                     json.dump(mailbox_content,file)
                 msg = f'You successfully send message to user {user}'
 
@@ -119,12 +120,24 @@ def send_message(data_list):
     
     return json.dumps(msg, indent=1)
 
+
+def chech_inbox(data_list):
+    '''return message in user inbox'''
+
+    global logged_user
+
+    with open(logged_user + '.json', 'r', encoding='utf-8') as file:
+        user_message = json.load(file)
+
+    return json.dumps(user_message, indent=1)
+
+
 def json_unpaking(data):
     '''Unpaking jsonfile'''
     global data_list
     data_list = data.split(' ')
     return data_list
-        
+
 
 server_socket = s.socket(s.AF_INET, s.SOCK_STREAM)
 server_socket.bind((HOST, PORT))
@@ -161,13 +174,17 @@ with connection:
         elif data_list[0] == 'users':
             connection.send(users_list(data_list).encode('utf8'))
 
+        elif data_list[0] == 'send':
+            connection.send(send_message(data_list).encode('utf8'))
+
+        elif data_list[0] == 'inbox':
+            connection.send(chech_inbox(data_list).encode('utf8'))
+
         elif data_list[0] == 'stop':
             connection.send(('server closed').encode('utf8'))
             server_socket.close()
             break
-        
-        elif data_list[0] == 'send':
-            connection.send(send_message(data_list).encode('utf8'))
+
         else:
             connection.send(('Unknown command').encode('utf8'))
 
