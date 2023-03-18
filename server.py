@@ -10,7 +10,7 @@ INFO = 'version: 0.2.0; creation date: 12.03.2023r'
 START_TIME = datetime.now()
 
 data_list = []
-logged_user = []
+logged_user = ''
 msg = ''
 
 
@@ -76,14 +76,20 @@ def login_user(data_list):
 def users_list(data_list):
     '''return list of existing users'''
 
-    list_of_user = []
-    with open('user.json', 'r', encoding='utf-8') as file:
-        user_data = json.load(file)
+    global logged_user
+    if logged_user != '':
 
-    for user in user_data:
-        list_of_user.append(user)
+        list_of_user = []
+        with open('user.json', 'r', encoding='utf-8') as file:
+            user_data = json.load(file)
 
-    return json.dumps(list_of_user, indent=1)
+        for user in user_data:
+            list_of_user.append(user)
+
+        return json.dumps(list_of_user, indent=1)
+    
+    else:
+        return json.dumps("You have to be logged to check list of users", indent=1)
     
 
 def send_message(data_list):
@@ -97,7 +103,7 @@ def send_message(data_list):
     user_message = {str(datetime.now()): {logged_user : ' '.join(data_list[2:])}}
 
     if user in user_data:
-        if logged_user in user_data:
+        if logged_user != '':
             if logged_user != user:
                 try:
                     with open(user + '.json', 'r', encoding='utf-8') as file:
@@ -126,10 +132,19 @@ def chech_inbox(data_list):
 
     global logged_user
 
-    with open(logged_user + '.json', 'r', encoding='utf-8') as file:
-        user_message = json.load(file)
-
-    return json.dumps(user_message, indent=1)
+    if logged_user != '':
+        try:
+            with open(logged_user + '.json', 'r', encoding='utf-8') as file:
+                user_message = json.load(file)
+            return json.dumps(user_message, indent=1)
+        
+        except (FileNotFoundError, json.decoder.JSONDecodeError):
+            msg = 'Your inbox is empty'
+        
+    else:
+        msg = 'First you must log in!'
+    
+    return json.dumps(msg, indent=1)
 
 
 def json_unpaking(data):
