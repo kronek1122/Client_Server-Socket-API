@@ -24,7 +24,8 @@ def available_commands():
         'stop': "stops server and client",
         'register <user name> <password>' : 'create new user',
         'login <user name> <password>' : 'log in user',
-        'users' : 'return all user list'
+        'users' : 'return all user list',
+        'send <user name> <massage>': 'send a massage to the selected user'
     }
     return json.dumps(msg, indent=1)
 
@@ -82,7 +83,41 @@ def users_list(data_list):
         list_of_user.append(user)
 
     return json.dumps(list_of_user, indent=1)
+    
 
+def send_message(data_list):
+    '''sending message to other players'''
+
+    global logged_user
+    with open('user.json', 'r', encoding='utf8') as file:
+        user_data = json.load(file)
+    
+    user = data_list[1]
+    user_message = {str(datetime.now()): {logged_user : ' '.join(data_list[2:])}}
+
+    if user in user_data:
+        if logged_user in user_data:
+            if logged_user != user:
+                try:
+                    with open(user + '.json', 'r', encoding='utf8') as file:
+                        mailbox_content = json.load(file)
+                except (FileNotFoundError, json.decoder.JSONDecodeError):
+                    mailbox_content = {}
+
+                mailbox_content.update(user_message)
+
+                with open(user + '.json', 'w', encoding='utf8') as file:
+                    json.dump(mailbox_content,file)
+                msg = f'You successfully send message to user {user}'
+
+            else:
+                msg = "You can't send message to yourself"
+        else:
+            msg = 'Command available only for logged users'
+    else:
+        msg = "User doesn't exist"
+    
+    return json.dumps(msg, indent=1)
 
 def json_unpaking(data):
     '''Unpaking jsonfile'''
@@ -130,7 +165,9 @@ with connection:
             connection.send(('server closed').encode('utf8'))
             server_socket.close()
             break
-
+        
+        elif data_list[0] == 'send':
+            connection.send(send_message(data_list).encode('utf8'))
         else:
-            connection.send(('nieznana komenda').encode('utf8'))
+            connection.send(('Unknown command').encode('utf8'))
 
