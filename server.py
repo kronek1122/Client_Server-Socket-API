@@ -62,7 +62,7 @@ def login_user(data_list):
 
     if user in user_data:
         if user_data[user]['password'] == password:
-            msg = f'User {user} succesfully log in'
+            msg = f'User {user} successfully log in'
             active_user = user
         else:
             msg = f'Wrong password for {user} account'
@@ -99,8 +99,6 @@ def send_message(data_list):
         user_data = json.load(file)
 
     user = data_list[1]
-    user_message = {str(datetime.now()): {active_user : ' '.join(data_list[2:])}}
-
     if user in user_data:
         if active_user != '':
             if active_user != user:
@@ -110,7 +108,10 @@ def send_message(data_list):
                 except (FileNotFoundError, json.decoder.JSONDecodeError):
                     mailbox_content = {}
 
-                mailbox_content.update(user_message)
+                if active_user in mailbox_content:
+                    mailbox_content[active_user][datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = ' '.join(data_list[2:])
+                else:  
+                    mailbox_content[active_user] = {datetime.now().strftime("%Y-%m-%d %H:%M:%S") : ' '.join(data_list[2:])}
 
                 with open(user + '.json', 'w', encoding='utf-8') as file:
                     json.dump(mailbox_content,file)
