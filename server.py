@@ -10,7 +10,7 @@ INFO = 'version: 0.2.0; creation date: 12.03.2023r'
 START_TIME = datetime.now()
 
 data_list = []
-logged_user = ''
+active_user = ''
 msg = ''
 
 
@@ -39,13 +39,12 @@ def uptime():
 
 def register_user(data_list):
     '''Adding a new user'''
-    user_information = {data_list[1]:data_list[2]}
 
-    with open('user.json', 'r', encoding='utf-8') as file:
+    with open('user_info.json', 'r', encoding='utf-8') as file:
         user_data = json.load(file)
-    user_data[data_list[1]] = {data_list[1]:data_list[2]}
+    user_data[data_list[1]] = {'password':data_list[2], 'is_admin': False}
 
-    with open('user.json', 'w', encoding='utf-8') as file:
+    with open('user_info.json', 'w', encoding='utf-8') as file:
         json.dump(user_data, file)
     msg = f'User {data_list[1]} succesfully registered'
 
@@ -54,57 +53,57 @@ def register_user(data_list):
 
 def login_user(data_list):
     '''Login user function'''
-    global logged_user
-    with open('user.json', 'r', encoding='utf-8') as file:
+    global active_user
+    with open('user_info.json', 'r', encoding='utf-8') as file:
         user_data = json.load(file)
-    
+
     user = data_list[1]
     password = data_list[2]
 
     if user in user_data:
-        if user_data[user][user] == password:
+        if user_data[user]['password'] == password:
             msg = f'User {user} succesfully log in'
-            logged_user = user
+            active_user = user
         else:
             msg = f'Wrong password for {user} account'
     else:
         msg = "User doesn't exist"
-    
+
     return json.dumps(msg, indent=1)
 
 
 def users_list(data_list):
     '''return list of existing users'''
 
-    global logged_user
-    if logged_user != '':
+    global active_user
+    if active_user != '':
 
         list_of_user = []
-        with open('user.json', 'r', encoding='utf-8') as file:
+        with open('user_info.json', 'r', encoding='utf-8') as file:
             user_data = json.load(file)
 
         for user in user_data:
             list_of_user.append(user)
 
         return json.dumps(list_of_user, indent=1)
-    
+
     else:
         return json.dumps("You have to be logged to check list of users", indent=1)
-    
+
 
 def send_message(data_list):
     '''sending message to other players'''
 
-    global logged_user
-    with open('user.json', 'r', encoding='utf-8') as file:
+    global active_user
+    with open('user_info.json', 'r', encoding='utf-8') as file:
         user_data = json.load(file)
-    
+
     user = data_list[1]
-    user_message = {str(datetime.now()): {logged_user : ' '.join(data_list[2:])}}
+    user_message = {str(datetime.now()): {active_user : ' '.join(data_list[2:])}}
 
     if user in user_data:
-        if logged_user != '':
-            if logged_user != user:
+        if active_user != '':
+            if active_user != user:
                 try:
                     with open(user + '.json', 'r', encoding='utf-8') as file:
                         mailbox_content = json.load(file)
@@ -123,32 +122,31 @@ def send_message(data_list):
             msg = 'Command available only for logged users'
     else:
         msg = "User doesn't exist"
-    
+
     return json.dumps(msg, indent=1)
 
 
-def chech_inbox(data_list):
+def check_inbox(data_list):
     '''return message in user inbox'''
 
-    global logged_user
+    global active_user
 
-    if logged_user != '':
+    if active_user != '':
         try:
-            with open(logged_user + '.json', 'r', encoding='utf-8') as file:
+            with open(active_user + '.json', 'r', encoding='utf-8') as file:
                 user_message = json.load(file)
             return json.dumps(user_message, indent=1)
-        
         except (FileNotFoundError, json.decoder.JSONDecodeError):
             msg = 'Your inbox is empty'
-        
+
     else:
         msg = 'First you must log in!'
-    
+
     return json.dumps(msg, indent=1)
 
 
 def json_unpaking(data):
-    '''Unpaking jsonfile'''
+    '''Unpacking jsonfile'''
     global data_list
     data_list = data.split(' ')
     return data_list
@@ -168,7 +166,7 @@ with connection:
 
         if not data:
             break
-        
+
         json_unpaking(data)
 
         if data_list[0] == 'uptime':
@@ -193,7 +191,7 @@ with connection:
             connection.send(send_message(data_list).encode('utf8'))
 
         elif data_list[0] == 'inbox':
-            connection.send(chech_inbox(data_list).encode('utf8'))
+            connection.send(check_inbox(data_list).encode('utf8'))
 
         elif data_list[0] == 'stop':
             connection.send(('server closed').encode('utf8'))
@@ -202,4 +200,3 @@ with connection:
 
         else:
             connection.send(('Unknown command').encode('utf8'))
-
