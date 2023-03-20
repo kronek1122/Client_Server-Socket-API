@@ -107,15 +107,31 @@ def send_message(data_list):
                         mailbox_content = json.load(file)
                 except (FileNotFoundError, json.decoder.JSONDecodeError):
                     mailbox_content = {}
+                
+                if 'unread_messages' in mailbox_content:
+                    if len(mailbox_content['unread'])<5:
+                        mailbox_content['unread'][active_user] = ' '.join(data_list[2:])
+                        if active_user in mailbox_content:
+                            mailbox_content[active_user][datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = ' '.join(data_list[2:])
+                        else:  
+                            mailbox_content[active_user] = {datetime.now().strftime("%Y-%m-%d %H:%M:%S") : ' '.join(data_list[2:])}
 
-                if active_user in mailbox_content:
-                    mailbox_content[active_user][datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = ' '.join(data_list[2:])
-                else:  
-                    mailbox_content[active_user] = {datetime.now().strftime("%Y-%m-%d %H:%M:%S") : ' '.join(data_list[2:])}
+                        with open(user + '.json', 'w', encoding='utf-8') as file:
+                            json.dump(mailbox_content,file)
+                        msg = f'You successfully send message to user {user}'
 
-                with open(user + '.json', 'w', encoding='utf-8') as file:
-                    json.dump(mailbox_content,file)
-                msg = f'You successfully send message to user {user}'
+                    else:
+                        msg = f'Message could not be sent, mailbox user {user} is full'
+                else:
+                    mailbox_content['unread_messages'] = {active_user : ' '.join(data_list[2:])}
+                    if active_user in mailbox_content:
+                        mailbox_content[active_user][datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = ' '.join(data_list[2:])
+                    else:  
+                        mailbox_content[active_user] = {datetime.now().strftime("%Y-%m-%d %H:%M:%S") : ' '.join(data_list[2:])}
+
+                    with open(user + '.json', 'w', encoding='utf-8') as file:
+                        json.dump(mailbox_content,file)
+                    msg = f'You successfully send message to user {user}'
 
             else:
                 msg = "You can't send message to yourself"
@@ -128,15 +144,15 @@ def send_message(data_list):
 
 
 def check_inbox(data_list):
-    '''return message in user inbox'''
+    '''return messages in user inbox'''
 
     global active_user
 
     if active_user != '':
         try:
             with open(active_user + '.json', 'r', encoding='utf-8') as file:
-                user_message = json.load(file)
-            return json.dumps(user_message, indent=1)
+                user_messages = json.load(file)
+            return json.dumps(user_messages, indent=1)
         except (FileNotFoundError, json.decoder.JSONDecodeError):
             msg = 'Your inbox is empty'
 
@@ -146,7 +162,11 @@ def check_inbox(data_list):
     return json.dumps(msg, indent=1)
 
 
-def json_unpaking(data):
+def check_unread_messages(data_list):
+    pass
+
+
+def json_unpacking(data):
     '''Unpacking jsonfile'''
     global data_list
     data_list = data.split(' ')
@@ -168,7 +188,7 @@ with connection:
         if not data:
             break
 
-        json_unpaking(data)
+        json_unpacking(data)
 
         if data_list[0] == 'uptime':
             connection.send(uptime().encode('utf8'))
