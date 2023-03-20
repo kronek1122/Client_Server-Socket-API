@@ -25,8 +25,9 @@ def available_commands():
         'register <user name> <password>' : 'create new user',
         'login <user name> <password>' : 'log in user',
         'users' : 'return all user list',
-        'send <user name> <massage>': 'send a massage to the selected user',
-        'inbox' : 'check message in your inbox'
+        'send <user name> <massage>': 'send a message to the selected user',
+        'inbox' : 'check messages in your inbox',
+        'unread' : 'check only unread messages'
     }
     return json.dumps(msg, indent=1)
 
@@ -53,6 +54,7 @@ def register_user(data_list):
 
 def login_user(data_list):
     '''Login user function'''
+
     global active_user
     with open('user_info.json', 'r', encoding='utf-8') as file:
         user_data = json.load(file)
@@ -72,7 +74,7 @@ def login_user(data_list):
     return json.dumps(msg, indent=1)
 
 
-def users_list(data_list):
+def users_list():
     '''return list of existing users'''
 
     global active_user
@@ -92,7 +94,7 @@ def users_list(data_list):
 
 
 def send_message(data_list):
-    '''sending message to other players'''
+    '''sending message to other users'''
 
     global active_user
     with open('user_info.json', 'r', encoding='utf-8') as file:
@@ -109,8 +111,8 @@ def send_message(data_list):
                     mailbox_content = {}
                 
                 if 'unread_messages' in mailbox_content:
-                    if len(mailbox_content['unread'])<5:
-                        mailbox_content['unread'][active_user] = ' '.join(data_list[2:])
+                    if len(mailbox_content['unread_messages'])<5:
+                        mailbox_content['unread_messages'][datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ ' , ' + active_user] = ' '.join(data_list[2:])
                         if active_user in mailbox_content:
                             mailbox_content[active_user][datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = ' '.join(data_list[2:])
                         else:  
@@ -123,7 +125,7 @@ def send_message(data_list):
                     else:
                         msg = f'Message could not be sent, mailbox user {user} is full'
                 else:
-                    mailbox_content['unread_messages'] = {active_user : ' '.join(data_list[2:])}
+                    mailbox_content['unread_messages'] = {datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ ' , ' + active_user : ' '.join(data_list[2:])}
                     if active_user in mailbox_content:
                         mailbox_content[active_user][datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = ' '.join(data_list[2:])
                     else:  
@@ -147,11 +149,11 @@ def check_inbox(data_list):
     '''return messages in user inbox'''
 
     global active_user
-
     if active_user != '':
         try:
             with open(active_user + '.json', 'r', encoding='utf-8') as file:
                 user_messages = json.load(file)
+                del user_messages['unread_messages']
             return json.dumps(user_messages, indent=1)
         except (FileNotFoundError, json.decoder.JSONDecodeError):
             msg = 'Your inbox is empty'
@@ -162,8 +164,25 @@ def check_inbox(data_list):
     return json.dumps(msg, indent=1)
 
 
-def check_unread_messages(data_list):
-    pass
+def check_unread_messages():
+    '''return only unread messages in user inbox'''
+
+    global active_user
+    if active_user != '':
+        try:
+            with open(active_user + '.json', 'r', encoding='utf-8') as file:
+                user_messages = json.load(file)
+                if 'unread_messages' in user_messages:
+                    msg = user_messages['unread_messages']
+                    del user_messages['unread_messages']
+                    with open(active_user + '.json', 'w', encoding='utf-8') as file:
+                        json.dump(user_messages, file)
+                else: msg = 'Your unread messages inbox is empty'
+        except (FileNotFoundError, json.decoder.JSONDecodeError):
+            msg = 'Your unread messages inbox is empty'
+    else:
+        msg = 'First you must log in!'
+    return json.dumps(msg, indent=1)
 
 
 def json_unpacking(data):
@@ -206,13 +225,16 @@ with connection:
             connection.send(login_user(data_list).encode('utf8'))
 
         elif data_list[0] == 'users':
-            connection.send(users_list(data_list).encode('utf8'))
+            connection.send(users_list().encode('utf8'))
 
         elif data_list[0] == 'send':
             connection.send(send_message(data_list).encode('utf8'))
 
         elif data_list[0] == 'inbox':
             connection.send(check_inbox(data_list).encode('utf8'))
+
+        elif data_list[0] == 'unread':
+            connection.send(check_unread_messages().encode('utf8'))
 
         elif data_list[0] == 'stop':
             connection.send(('server closed').encode('utf8'))
