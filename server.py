@@ -153,10 +153,11 @@ def check_inbox(data_list):
         user_data = json.load(file)
 
     if active_user != '':
-        if user_data[active_user]['is_admin'] is True:
+        if len(data_list)>1 and user_data[active_user]['is_admin'] is True:
             try:
                 with open(data_list[1] + '.json', 'r', encoding='utf-8') as file:
                     user_messages = json.load(file)
+                    del user_messages['unread_messages']
                 return json.dumps(user_messages, indent=1)
             except (FileNotFoundError, json.decoder.JSONDecodeError):
                 msg = 'Your inbox is empty'
