@@ -109,9 +109,9 @@ def send_message(data_list):
                         mailbox_content = json.load(file)
                 except (FileNotFoundError, json.decoder.JSONDecodeError):
                     mailbox_content = {}
-                
+
                 if 'unread_messages' in mailbox_content:
-                    if len(mailbox_content['unread_messages'])<5:
+                    if len(mailbox_content['unread_messages'])<5 or user_data[active_user]['is_admin'] is True :
                         mailbox_content['unread_messages'][datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ ' , ' + active_user] = ' '.join(data_list[2:])
                         if active_user in mailbox_content:
                             mailbox_content[active_user][datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = ' '.join(data_list[2:])
@@ -149,18 +149,28 @@ def check_inbox(data_list):
     '''return messages in user inbox'''
 
     global active_user
+    with open('user_info.json', 'r', encoding='utf-8') as file:
+        user_data = json.load(file)
+
     if active_user != '':
-        try:
-            with open(active_user + '.json', 'r', encoding='utf-8') as file:
-                user_messages = json.load(file)
-                del user_messages['unread_messages']
-            return json.dumps(user_messages, indent=1)
-        except (FileNotFoundError, json.decoder.JSONDecodeError):
-            msg = 'Your inbox is empty'
+        if user_data[active_user]['is_admin'] is True:
+            try:
+                with open(data_list[1] + '.json', 'r', encoding='utf-8') as file:
+                    user_messages = json.load(file)
+                return json.dumps(user_messages, indent=1)
+            except (FileNotFoundError, json.decoder.JSONDecodeError):
+                msg = 'Your inbox is empty'
 
-    else:
-        msg = 'First you must log in!'
+        else:
+            try:
+                with open(active_user + '.json', 'r', encoding='utf-8') as file:
+                    user_messages = json.load(file)
+                    del user_messages['unread_messages']
+                return json.dumps(user_messages, indent=1)
+            except (FileNotFoundError, json.decoder.JSONDecodeError):
+                msg = 'Your inbox is empty'
 
+    else: msg = 'First you must log in!'
     return json.dumps(msg, indent=1)
 
 
@@ -243,3 +253,4 @@ with connection:
 
         else:
             connection.send(('Unknown command').encode('utf8'))
+            
