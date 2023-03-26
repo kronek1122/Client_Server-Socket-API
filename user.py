@@ -82,8 +82,10 @@ class User:
         if 'unread_messages' in mailbox:
             if len(mailbox['unread_messages']) >= 5 and not user_data[self.active_user]['is_admin']:
                 return json.dumps(f'Message could not be sent, mailbox user {username} is full', indent=1)
-
-        mailbox['unread_messages'] = {datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ ' , ' + self.active_user : ' '.join(message)}
+            else:
+                mailbox['unread_messages'][datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = ' '.join(message)
+        else:
+            mailbox['unread_messages'] = {datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ ' , ' + self.active_user : ' '.join(message)}
 
         if self.active_user in mailbox:
             mailbox[self.active_user][datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = ' '.join(message)
@@ -116,7 +118,7 @@ class User:
                     msg = 'Your inbox is empty'
 
             elif len(query)>1 and user_data[self.active_user]['is_admin'] is False:
-                msg = 'Uou do not have permission to check another user mail' 
+                msg = 'You do not have permission to check another user mail'
 
             else:
                 try:
