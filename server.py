@@ -10,6 +10,8 @@ PORT = 65432
 INFO = 'version: 0.2.0; creation date: 12.03.2023r'
 START_TIME = datetime.now()
 
+
+
 def available_commands():
     '''Return json file with list of available commands'''
 

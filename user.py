@@ -31,7 +31,7 @@ class User:
 
         if username in user_data:
             if user_data[username]['password'] == password:
-                msg = f'User {username} successfully log in'
+                msg = f'User {username} successfully login'
                 self.active_user = username
             else:
                 msg = f'Wrong password for {username} account'
@@ -64,48 +64,36 @@ class User:
         with open('user_info.json', 'r', encoding='utf-8') as file:
             user_data = json.load(file)
 
-        if username in user_data:
-            if self.active_user != '':
-                if self.active_user != username:
-                    try:
-                        with open(username + '.json', 'r', encoding='utf-8') as file:
-                            mailbox_content = json.load(file)
-                    except (FileNotFoundError, json.decoder.JSONDecodeError):
-                        mailbox_content = {}
+        if username not in user_data:
+            return json.dumps("User doesn't exist", indent=1)
 
-                    if 'unread_messages' in mailbox_content:
-                        if len(mailbox_content['unread_messages'])<5 or user_data[self.active_user]['is_admin'] is True :
-                            mailbox_content['unread_messages'][datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ ' , ' + self.active_user] = ' '.join(message)
-                            if self.active_user in mailbox_content:
-                                mailbox_content[self.active_user][datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = ' '.join(message)
-                            else:
-                                mailbox_content[self.active_user] = {datetime.now().strftime("%Y-%m-%d %H:%M:%S") : ' '.join(message)}
+        if not self.active_user:
+            return json.dumps('Command available only for logged users', indent=1)
 
-                            with open(username + '.json', 'w', encoding='utf-8') as file:
-                                json.dump(mailbox_content,file)
-                            msg = f'You successfully send message to user {username}'
+        if self.active_user == username:
+            return json.dumps("You can't send message to yourself", indent=1)
 
-                        else:
-                            msg = f'Message could not be sent, mailbox user {username} is full'
-                    else:
-                        mailbox_content['unread_messages'] = {datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ ' , ' + self.active_user : ' '.join(message)}
-                        if self.active_user in mailbox_content:
-                            mailbox_content[self.active_user][datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = ' '.join(message)
-                        else:
-                            mailbox_content[self.active_user] = {datetime.now().strftime("%Y-%m-%d %H:%M:%S") : ' '.join(message)}
+        try:
+            with open(username + '.json', 'r', encoding='utf-8') as file:
+                mailbox = json.load(file)
+        except (FileNotFoundError, json.decoder.JSONDecodeError):
+            mailbox = {}
 
-                        with open(username + '.json', 'w', encoding='utf-8') as file:
-                            json.dump(mailbox_content,file)
-                        msg = f'You successfully send message to user {username}'
+        if 'unread_messages' in mailbox:
+            if len(mailbox['unread_messages']) >= 5 and not user_data[self.active_user]['is_admin']:
+                return json.dumps(f'Message could not be sent, mailbox user {username} is full', indent=1)
 
-                else:
-                    msg = "You can't send message to yourself"
-            else:
-                msg = 'Command available only for logged users'
+        mailbox['unread_messages'] = {datetime.now().strftime("%Y-%m-%d %H:%M:%S")+ ' , ' + self.active_user : ' '.join(message)}
+
+        if self.active_user in mailbox:
+            mailbox[self.active_user][datetime.now().strftime("%Y-%m-%d %H:%M:%S")] = ' '.join(message)
         else:
-            msg = "User doesn't exist"
+            mailbox[self.active_user] = {datetime.now().strftime("%Y-%m-%d %H:%M:%S") : ' '.join(message)}
 
-        return json.dumps(msg, indent=1)
+        with open(username + '.json', 'w', encoding='utf-8') as file:
+            json.dump(mailbox, file)
+
+        return json.dumps(f'You successfully send message to user {username}', indent=1)
 
 
     def check_inbox(self, query):
@@ -126,6 +114,9 @@ class User:
                     return json.dumps(user_messages, indent=1)
                 except (FileNotFoundError, json.decoder.JSONDecodeError):
                     msg = 'Your inbox is empty'
+
+            elif len(query)>1 and user_data[self.active_user]['is_admin'] is False:
+                msg = 'Uou do not have permission to check another user mail' 
 
             else:
                 try:
