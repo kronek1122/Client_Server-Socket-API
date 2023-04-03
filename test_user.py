@@ -1,7 +1,7 @@
 import unittest
 import json
 from datetime import datetime
-from user import User
+from  user import User
 
 class TestUser(unittest.TestCase):
 
