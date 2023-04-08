@@ -66,7 +66,7 @@ class TestUser(unittest.TestCase):
 
         # Check that list is accessible after login
         with patch('builtins.open', create=True) as mocked_file:
-            mocked_file.return_value.__enter__.return_value.read.return_value = ('{"test_user": {"password": "test_password", "is_admin": false},"to_user": {"password": "test_password", "is_admin": false}, "test_admin": {"password": "test_password", "is_admin": true}}')
+            mocked_file.return_value.__enter__.return_value.read.return_value ='{"test_user": {"password": "test_password", "is_admin": false},"to_user": {"password": "test_password", "is_admin": false}, "test_admin": {"password": "test_password", "is_admin": true}}'
             expected_output = json.dumps(["test_user","to_user", "test_admin"],indent=1)
             self.assertEqual(self.user.users_list(), expected_output)
 
