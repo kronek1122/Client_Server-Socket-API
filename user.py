@@ -9,12 +9,12 @@ class User:
         self.active_user = ''
 
 
-    def register(self, username, password):
+    def register(self, username, password, is_admin=False):
         '''Adding a new user'''
 
         with open('user_info.json', 'r', encoding='utf-8') as file:
             user_data = json.load(file)
-        user_data[(username)] = {'password':password, 'is_admin': False}
+        user_data[(username)] = {'password':password, 'is_admin': is_admin}
 
         with open('user_info.json', 'w', encoding='utf-8') as file:
             json.dump(user_data, file)
